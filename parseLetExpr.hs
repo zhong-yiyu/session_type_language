@@ -2,16 +2,16 @@ import Text.Parsec
 import Text.Parsec.String (Parser)
 import Language.Haskell.TH.Syntax (NameSpace(VarName))
 
-data LetStmt = Let String Expr  Type
-    deriving (Show)
+-- data LetStmt = Let String Expr  Type
+    -- deriving (Show)
 
-data Expr = Var String | Int Int | String String
+data Expr = Var String | Int Int | String String | Let String Expr Type
     deriving (Show)
 
 data Type = IntType | StringType | UnknownType
     deriving (Show)
 
-letExpression :: Parser LetStmt
+letExpression :: Parser Expr
 letExpression = do
   string "let"
   spaces
@@ -40,5 +40,5 @@ expression = do
   varName <- many1 letter <|> many1 digit
   return (Var varName)
 
-parseLetStatement :: String -> Either ParseError LetStmt
+parseLetStatement :: String -> Either ParseError Expr
 parseLetStatement = parse letExpression ""
