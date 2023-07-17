@@ -37,7 +37,7 @@ typeParser = choice [string ":Int" >> return IntType, string ":String" >> return
 
 expression :: Parser Expr
 expression = do
-  varName <- many1 letter
+  varName <- many1 letter <|> many1 digit
   return (Var varName)
 
 parseLetStatement :: String -> Either ParseError LetStmt
