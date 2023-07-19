@@ -19,7 +19,6 @@ letExpression = do
   char '='
   spaces
   expr <- expression
-  inexpr <- inExprParser
   return (Let varName expr varType )
 
 letInExpression :: Parser Expr
