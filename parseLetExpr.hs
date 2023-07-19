@@ -34,7 +34,7 @@ letInExpression = do
   expr <- expression
   LetIn varName expr varType <$> inExprParser
 
--- 通过解析是否有":"符号判断是否有类型，如果没有符号，就返回UnknownType
+-- By detecting the ":" character, we can determine if the type has an annotation
 typeParser :: Parser Type
 typeParser = choice [string ":Int" >> return IntType, string ":String" >> return StringType, return UnknownType]
 
@@ -45,6 +45,9 @@ inExprParser = do
     spaces
     expression
 
+-- TODO: Find some way to deal with the "in" statement's scope.
+-- What exactly is the scope in this language?
+
 expression :: Parser Expr
 expression = do
     varName <- many1 letter <|> many1 digit
@@ -52,3 +55,7 @@ expression = do
 
 parseLetStatement :: String -> Either ParseError Expr
 parseLetStatement = parse letExpression ""
+
+-- TODO: Implement the checking function.
+checkLetStatement :: Expr -> Type -> Bool
+checkLetStatement = undefined
