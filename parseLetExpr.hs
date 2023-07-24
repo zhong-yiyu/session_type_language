@@ -73,21 +73,22 @@ parseLetStatement = parse letExpression ""
 checkLetStatement :: Expr -> Type -> Bool
 checkLetStatement = undefined
 
--- TODO: Need to find a way to separately deal with digits and letters.
--- I can simply treat digits(without any letters) as Ints
--- For now not sure what to do with strings, not even sure strings are actually needed in this language
+checkExprWithEnv :: Expr -> Type -> TypeEnv
+-- checkExprWithEnv = undefined
+checkExprWithEnv (Var varName) varType = TypeEnv [(varName, varType)]
+-- checkExprWithEnv (ExprAdd e1 e2) varType = 
+-- checkExprWithEnv (Let varname expr1 expr2) varType = 
+  -- let env1 = checkExprWithEnv expr1 varType in
+    -- let checkTy = find varname env1 in
+      -- let env2 = checkExprWithEnv expr2 checkTy in
+        -- env1 ++ env2
 
--- IMPORTANT how many basic types do I need?
--- How about the Session types?
 
+-- This function is the "default" or "catch-all" case, normally used as last resort
+checkExprWithEnv e ty = 
+  let (synthTy, env) = synthExpr e in
+    if synthTy == ty then env else error "Type mismatch"
 
-checkExpr :: Expr -> Type -> Bool
-checkExpr (ExprAdd e1 e2) IntType = checkExpr e1 IntType && checkExpr e2 IntType
-checkExpr num1 IntType = True
-checkExpr (VarType _ _) _ = True
-
--- 在ghci中测试一下内容，应该为True
--- checkExpr (Int 1) IntType
 
 synthExpr :: Expr -> (Type, TypeEnv)
 synthExpr (Let {}) = (LetType, TypeEnv [])
@@ -98,18 +99,3 @@ synthExpr (ExprAdd e1 e2) =
 synthExpr (VarType varName varType) = (varType, TypeEnv [(varName, varType)])
 synthExpr (Int _) = (IntType, TypeEnv [])
 synthExpr _ = error "Not implemented"
-
-checkExprWithEnv :: Expr -> Type -> TypeEnv
--- checkExprWithEnv = undefined
-checkExprWithEnv (Var varName) varType = TypeEnv [(varName, varType)]
--- checkExprWithEnv (ExprAdd e1 e2) varType = 
--- checkExprWithEnv (Let varname expr1 expr2) varType = 
-  -- let env1 = checkExprWithEnv expr1 varType in
-    -- let checkTy = find varname env1 in
-      -- let env2 = checkExprWithEnv expr2 checkTy in
-        -- env1 ++ env2
--- This function is the "default" or "catch-all" case, normally used as last resort
-checkExprWithEnv e ty = 
-  let (synthTy, env) = synthExpr e in
-    if synthTy == ty then env else error "Type mismatch"
--- let exampleAddExpr = ExprAdd (Int 1) (Int 2)
