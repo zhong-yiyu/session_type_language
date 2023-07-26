@@ -14,8 +14,7 @@ data Expr
 newtype TypeEnv = TypeEnv [(String, Type)]
   deriving (Show)
 
-combineTypeEnv :: TypeEnv -> TypeEnv -> TypeEnv
-combineTypeEnv (TypeEnv env1) (TypeEnv env2) = TypeEnv (env1 ++ env2)
+
 
 data Type = IntType | UnknownType | UnitType| LetType
   deriving (Show, Eq)
@@ -74,21 +73,16 @@ checkLetStatement :: Expr -> Type -> Bool
 checkLetStatement = undefined
 
 checkExprWithEnv :: Expr -> Type -> TypeEnv
--- checkExprWithEnv = undefined
 checkExprWithEnv (Var varName) varType = TypeEnv [(varName, varType)]
--- checkExprWithEnv (ExprAdd e1 e2) varType = 
--- checkExprWithEnv (Let varname expr1 expr2) varType = 
-  -- let env1 = checkExprWithEnv expr1 varType in
-    -- let checkTy = find varname env1 in
-      -- let env2 = checkExprWithEnv expr2 checkTy in
-        -- env1 ++ env2
-
 
 -- This function is the "default" or "catch-all" case, normally used as last resort
 checkExprWithEnv e ty = 
   let (synthTy, env) = synthExpr e in
     if synthTy == ty then env else error "Type mismatch"
 
+
+combineTypeEnv :: TypeEnv -> TypeEnv -> TypeEnv
+combineTypeEnv (TypeEnv env1) (TypeEnv env2) = TypeEnv (env1 ++ env2)
 
 synthExpr :: Expr -> (Type, TypeEnv)
 synthExpr (Let {}) = (LetType, TypeEnv [])
