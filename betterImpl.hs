@@ -94,11 +94,14 @@ Then we find the variable type in expr2, generate a type for varibale
 Finally we check if expr1 has type variable's type
 If everything is fine, we combine the type environment for expr1 and expr2, after checking those two environments don't overlap
 -}
-check (ELetIn var e1 e2) ty = 
-  let env1 = check e1 ty in
-  let env2 = check e2 ty in
-  let env = combine env1 env2 in
-  env
+check (ELetIn var expr1 expr2) ty = 
+  let in_scope_environment = check expr2 ty in
+    case lookup var in_scope_environment 
+    of
+      Just infered_var_type -> 
+        let expr1_environment = check expr1 infered_var_type in
+          combine in_scope_environment expr1_environment
+      Nothing -> error $ "Type error: " ++ show var ++ " is not in scope"
 -- Only invoke fallback if there are no other cases that match.
 check other ty =
     let (synthTy, env) = synth other in
