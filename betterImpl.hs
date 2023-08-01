@@ -1,3 +1,4 @@
+import Control.Exception.Base (assert)
 {- AST -}
 data Expr
   = EVar String
@@ -12,6 +13,7 @@ data Expr
 data Type = TyInt | TyBool | TyUnit
   deriving (Show, Eq)
 
+-- A type environment is actually a collection of variable names and their types.
 type TyEnv = [(String, Type)]
 
 {- Typechecker -}
@@ -19,6 +21,7 @@ type TyEnv = [(String, Type)]
 -- Note: At the moment we will fail at runtime if there is a type error.
 -- A nicer way of doing this would be to use `Either TypeError (Type, TyEnv)`
 
+-- combine two type environments into one.
 combine :: TyEnv -> TyEnv -> TyEnv
 combine e1 e2 = e1 ++ e2 -- FIXME: Also need to check that they do not overlap
 
@@ -48,15 +51,23 @@ x <= Int ; x : Int
 --   - Everything else should be a type error!
 synth :: Expr -> (Type, TyEnv)
 synth (EInt i) = (TyInt, []) -- Synthesise type
-synth (EBool i) = undefined
-synth EUnit = undefined
-synth (EAnnotate ty) = undefined
+synth (EBool i) = (TyBool, [])
+synth EUnit = (TyUnit, [])
+{-
+First try to figure out the type of expr, then check if the synthed type is the same as the annotated type
+-}
+synth (EAnnotate expr ty) = 
+  let synthedType = fst (synth expr) in
+  if synthedType == ty then
+    (ty, [])
+  else
+    error $ "Type error: " ++ show expr ++ " has type " ++ show synthedType ++ " but was annotated as " ++ show ty
 synth (EAdd e1 e2) =
   let env1 = check e1 TyInt in
   let env2 = check e2 TyInt in
   let env = combine env1 env2 in
   (TyInt, env)
-synth bad = error $ "Cannot synthesis type for " ++ (show bad)
+synth bad = error $ "Cannot synthesis type for " ++ show bad
 
 
 {-
@@ -76,13 +87,30 @@ M <= A ; env
 --   - Let
 --   - Anything can be synthesised (because of fallback rule)
 check :: Expr -> Type -> TyEnv
-check (EVar var) ty = [(var, ty)] 
-check (ELet var e1 e2) ty = undefined
+check (EVar var) ty = [(var, ty)]
+{-
+First we check if the expr2 has the same type as the "ty" argument, this would genenrate a type environment for the expr2.
+Then we find the variable type in expr2, generate a type for varibale
+Finally we check if expr1 has type variable's type
+If everything is fine, we combine the type environment for expr1 and expr2, after checking those two environments don't overlap
+-}
+check (ELetIn var e1 e2) ty = 
+  let env1 = check e1 ty in
+  let env2 = check e2 ty in
+  let env = combine env1 env2 in
+  env
 -- Only invoke fallback if there are no other cases that match.
 check other ty =
     let (synthTy, env) = synth other in
     if ty == synthTy then
         env
     else
-        error $ "Type error: fallback rule for " ++ (show other)
+        error $ "Type error: fallback rule for " ++ show other
 
+-- let testExpr1 = ELetIn "x" (EInt 5) (EAdd (EVar "x") (EInt 5))
+testExprAnnotate = EAnnotate (EVar "x") TyInt
+-- This Var expr alone should report an error in the "synth" function, because there's nothing to synthesize from.
+testExprVar = EVar "x"
+
+-- This expression should pass the synth function and get a type environment from the check function.
+testExprAdd = EAdd (EInt 5) (EInt 5)
