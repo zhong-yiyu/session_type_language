@@ -8,6 +8,10 @@ data Expr
   | ELetIn String Expr Expr
   | EAnnotate Expr Type
   | EAdd Expr Expr
+  -- For session types
+  | ESend Expr Expr
+  | EReceive Expr
+  | EEnd
   deriving (Show)
 
 data Type = TyInt | TyBool | TyUnit
@@ -117,3 +121,24 @@ testExprVar = EVar "x"
 
 -- This expression should pass the synth function and get a type environment from the check function.
 testExprAdd = EAdd (EInt 5) (EInt 5)
+
+-- Here's where we define the session types, there're three types of session types, send, receive and end.
+data SessionType
+  = Send Type SessionType
+  | Receive Type SessionType
+  | End
+  deriving (Show, Eq)
+
+-- So an example Session type would be
+exampleSessionType = Send TyInt (Receive TyInt End) -- Not sure if the "End" is necessary in the end.
+
+-- This function is about duality, it takes a session type and returns its dual.
+dualitySessionType :: SessionType -> SessionType
+dualitySessionType (Send ty sessionType) = Receive ty (dualitySessionType sessionType)
+dualitySessionType (Receive ty sessionType) = Send ty (dualitySessionType sessionType)
+dualitySessionType End = End
+-- To test its correctness, we can do 
+testDuality = dualitySessionType (Send TyInt (Receive TyInt End)) == Receive TyInt (Send TyInt End) -- It should return True
+
+-- The function "let func(channel) = send (12, channel) in End" should have the type "Send (Int, End)", and the AST of the function is
+-- ELetIn "func" (ESend (EInt 12) (EVar "channel")) EEnd
