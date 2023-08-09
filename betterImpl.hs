@@ -139,9 +139,18 @@ dualitySessionType (Receive ty sessionType) = Send ty (dualitySessionType sessio
 dualitySessionType End = End
 -- To test its correctness, we can do 
 testDuality = dualitySessionType (Send TyInt (Receive TyInt End)) == Receive TyInt (Send TyInt End) -- It should return True
-
 -- The function "let func(channel) = send (12, channel) in End" should have the type "Send (Int, End)", and the AST of the function is
 -- ELetIn "func" (ESend (EInt 12) (EVar "channel")) EEnd
 
 sample = ELetIn "func" (ESend (EInt 12) (EVar "channel")) EEnd
 sampeType = Send TyInt End
+-- TODO: Not sure what the "ESend" expression should construct
+-- for expression "send 12 channel", it should be "ESend (EInt 12) (EVar "channel")?
+-- Then in this case, the checker should ignore the "channel" channel?
+
+
+checkSessionExpr :: Expr -> SessionType -> TyEnv
+checkSessionExpr (ESend expr1 expr2) (Send ty sessionType) =
+  let env1 = check expr1 ty in
+  let env2 = checkSessionExpr expr2 sessionType in
+  combine env1 env2
