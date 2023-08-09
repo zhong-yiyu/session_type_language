@@ -12,6 +12,8 @@ data Expr
   | ESend Expr Expr
   | EReceive Expr
   | EEnd
+  -- For the "fork" construct expression, it takes in an expression
+  | EFork Expr
   deriving (Show)
 
 data Type = TyInt | TyBool | TyUnit
@@ -106,6 +108,9 @@ check (ELetIn var expr1 expr2) ty =
         let expr1_environment = check expr1 infered_var_type in
           combine in_scope_environment expr1_environment
       Nothing -> error $ "Type error: " ++ show var ++ " is not in scope"
+
+check (EFork expr) ty = undefined
+
 -- Only invoke fallback if there are no other cases that match.
 check other ty =
     let (synthTy, env) = synth other in
@@ -113,6 +118,7 @@ check other ty =
         env
     else
         error $ "Type error: fallback rule for " ++ show other
+
 
 -- let testExpr1 = ELetIn "x" (EInt 5) (EAdd (EVar "x") (EInt 5))
 testExprAnnotate = EAnnotate (EVar "x") TyInt
