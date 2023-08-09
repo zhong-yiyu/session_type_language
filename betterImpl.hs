@@ -142,3 +142,6 @@ testDuality = dualitySessionType (Send TyInt (Receive TyInt End)) == Receive TyI
 
 -- The function "let func(channel) = send (12, channel) in End" should have the type "Send (Int, End)", and the AST of the function is
 -- ELetIn "func" (ESend (EInt 12) (EVar "channel")) EEnd
+
+sample = ELetIn "func" (ESend (EInt 12) (EVar "channel")) EEnd
+sampeType = Send TyInt End
